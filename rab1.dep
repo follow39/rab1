@@ -40,6 +40,10 @@
             <name>$PROJ_DIR$\main.c</name>
             <outputs>
                 <tool>
+                    <name>ICCSTM8</name>
+                    <file> 19</file>
+                </tool>
+                <tool>
                     <name>__cstat</name>
                     <file> 15</file>
                 </tool>

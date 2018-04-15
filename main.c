@@ -118,6 +118,7 @@ void adc_init()
 {
   ADC_CSR_bit.CH = adc_current_channel;
   ADC_CSR_bit.EOCIE = 1;
+  ADC_CR1_bit.SPSEL = 3;//+1
   ADC_CR2_bit.ALIGN = 1;
   
   ADC_CR1_bit.ADON = 1;
@@ -288,6 +289,7 @@ __interrupt void TIM4_OVR_UIF_handler(void)
 #pragma vector = ADC1_EOC_vector
 __interrupt void ADC1_EOC_handler(void)
 {
+  //get data from channel 5 (mode setter)
   if(adc_current_channel == 5)
   {
     adc_border = 0;
@@ -318,7 +320,9 @@ __interrupt void ADC1_EOC_handler(void)
       }
     }
   }
-  if(adc_current_channel == 5)  
+  
+  //get data from channel 6 (value setter)
+  if(adc_current_channel == 6)
   {
     switch(mode)
     {
@@ -327,17 +331,9 @@ __interrupt void ADC1_EOC_handler(void)
       adc_interrupt = ADC_DRL;
       adc_interrupt = adc_interrupt + (ADC_DRH << 8);
       break;
-    case 2:
-      
+    case 2:      
       break;
-    case 3:      
-      buf = 0;
-      buf = ADC_DRL;
-      buf = buf + (ADC_DRH << 8);
-      if(buf > adc_threshold)
-      {
-        buffer_push(buf);
-      }
+    case 3:
       break;
     case 4:
       adc_main = 0;
@@ -346,6 +342,48 @@ __interrupt void ADC1_EOC_handler(void)
       break;
     }
   }
+  
+  //get data from channel 4 (microphone)
+  if(adc_current_channel == 4)
+  {
+    buf = 0;
+    buf = ADC_DRL;
+    buf = buf + (ADC_DRH << 8);
+    if(buf > adc_threshold)
+    {
+      buffer_push(buf);
+    }
+  }
+  
+  //change channel
+  if(mode == 3)
+  {
+    adc_counter++;
+    if(adc_counter == 5)
+    {
+      adc_current_channel = 5;
+    }
+    if(adc_counter == 6)
+    {
+      adc_current_channel = 6;
+    }
+    if(adc_counter != 5 && adc_counter != 6)
+    {
+      adc_current_channel = 4;
+      if(adc_counter > 99)
+      {
+        adc_counter = 0;
+      }
+    }
+  }
+  else
+  {
+    if(adc_counter == 5)
+      adc_counter = 6;
+    if(adc_counter == 6)
+      adc_counter = 5;
+  }
+  
   
   ADC_CSR_bit.CH = adc_current_channel;
   ADC_CR1_bit.ADON = 1;
