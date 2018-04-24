@@ -208,7 +208,7 @@ __interrupt void TIM2_OVR_UIF_handler(void)
   buf1 = TIM1_CNTRH;
   buf1 = buf1 << 8;
   buf1 = buf1 + TIM1_CNTRL;
-  while((buf1 < (buf - 0x25)) || (buf1 > (buf - 0x15)))
+  while((buf1 < (buf - 0x25)) || (buf1 > (buf + 0x05)))
   {
     buf1 = TIM1_CNTRH;
     buf1 = buf1 << 8;
