@@ -17,8 +17,7 @@
 #define MODE_BORDER_SECOND 1024*0.45
 #define MODE_BORDER_THIRD 1024*0.8
 #define MODE_BORDER_SAVE 1024*0.95
-#define MIC_PERIOD 30
-#define BUFFER_SIZE 20
+#define AVERAGE_DIVIDER 10
 
 
 
@@ -38,7 +37,6 @@ __interrupt void TIM4_OVR_UIF_handler(void);
 __interrupt void ADC1_EOC_handler(void);
 
 
-uint16_t buffer[BUFFER_SIZE];
 uint32_t period_main = MIN_MAIN_PERIOD;
 uint16_t period_main_half = 0;
 uint16_t period_main_start = 0;

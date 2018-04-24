@@ -201,29 +201,6 @@ void memory_write()
   return;
 }
 
-void buffer_push(uint16_t number)
-{
-  for(int i = 0; i < (BUFFER_SIZE - 1); i++)
-  {
-    buffer[i] = buffer[i+1];
-  }
-  buffer[BUFFER_SIZE - 1] = number;
-  
-  return;
-}
-
-void calc_average(void)
-{
-  average_value = 0;
-  for(int i = 0; i < BUFFER_SIZE; i++)
-  {
-    average_value = average_value + buffer[i];
-  }
-  average_value = average_value/BUFFER_SIZE;
-  
-  return;
-}
-
 #pragma vector = TIM2_OVR_UIF_vector
 __interrupt void TIM2_OVR_UIF_handler(void)
 {  
@@ -231,7 +208,7 @@ __interrupt void TIM2_OVR_UIF_handler(void)
   buf1 = TIM1_CNTRH;
   buf1 = buf1 << 8;
   buf1 = buf1 + TIM1_CNTRL;
-  while((buf1 < (buf - 0x0F)) || (buf1 > (buf - 0x05)))
+  while((buf1 < (buf - 0x25)) || (buf1 > (buf - 0x15)))
   {
     buf1 = TIM1_CNTRH;
     buf1 = buf1 << 8;
@@ -351,7 +328,6 @@ __interrupt void ADC1_EOC_handler(void)
     buf = buf + (ADC_DRH << 8);
     if(buf > adc_threshold)
     {
-      buffer_push(buf);
     }
   }
   
@@ -378,17 +354,17 @@ __interrupt void ADC1_EOC_handler(void)
   }
   else
   {
-    if(adc_counter == 5)
-      adc_counter = 6;
-    if(adc_counter == 6)
-      adc_counter = 5;
+    if(adc_current_channel == 5)
+      adc_current_channel = 6;
+    else
+      adc_current_channel = 5;
   }
   
+  ADC_CSR_bit.EOC = 0;
   
   ADC_CSR_bit.CH = adc_current_channel;
   ADC_CR1_bit.ADON = 1;
   
-  ADC_CSR_bit.EOC = 0;
   return;
 }
 
