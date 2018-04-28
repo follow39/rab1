@@ -7,7 +7,6 @@
 #define ADDRESS_OPT2 0x4803
 #define ADDRESS_NOPT2 0x4804
 #define ADDRESS_MAIN_PERIOD 0x4000
-#define ADDRESS_INTERRUPT_PERIOD 0x4002
 #define MIN_MAIN_PERIOD 260
 #define MAX_MAIN_PERIOD 800
 #define MIN_INTERRUPT_PERIOD 350
@@ -30,6 +29,7 @@ void timer_init(void);
 void memory_read(void);
 void memory_write(void);
 void calculating(void);
+void calculating_first(void);
 void buffer_push(uint16_t);
 void calc_average(void);
 __interrupt void TIM2_OVR_UIF_handler(void);

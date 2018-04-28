@@ -17,7 +17,7 @@ int main( void )
   set_interrupt_priority();
   
   memory_read();
-  calculating();
+  calculating_first();
   memory_write();
   
   
@@ -33,6 +33,23 @@ int main( void )
   {
     asm("nop");
   }
+}
+
+void calculating_first()
+{
+  if(period_main == 0)
+  {
+    period_main = MIN_MAIN_PERIOD;
+  }
+  
+  period_interrupt = MIN_INTERRUPT_PERIOD;
+    
+  period_main_half = period_main/2;
+  period_main_start = period_main_half/2;
+  period_main_half = period_main_start*2;
+  period_main = period_main_half*2;
+  
+  return;
 }
 
 void calculating()
