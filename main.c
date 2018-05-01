@@ -32,6 +32,34 @@ int main( void )
   while(1)
   {
     asm("nop");
+    if(mode == 3 && average_value < adc_threshold)
+    {
+      TIM1_CR1_bit.CEN = 0;
+      TIM1_BKR_bit.MOE = 0;
+      TIM2_CR1_bit.CEN = 0;
+      TIM4_CR1_bit.CEN = 0;
+    }
+    if(mode == 3 && average_value > adc_threshold && TIM2_CR1_bit.CEN == 0 && TIM4_CR1_bit.CEN == 0)
+    {
+      calculating();
+      
+      TIM1_CNTRH = period_main_start >> 8;
+      TIM1_CNTRL = period_main_start & 0xFF;
+      
+      TIM1_CCR1H = period_main_half >> 8;
+      TIM1_CCR1L = period_main_half & 0xFF;
+      
+      TIM1_ARRH = period_main >> 8;
+      TIM1_ARRL = period_main & 0xFF;
+      
+      TIM2_ARRH = period_interrupt >> 8;
+      TIM2_ARRL = period_interrupt & 0xFF;
+      
+      TIM1_CR1_bit.CEN = 1;
+      TIM1_BKR_bit.MOE = 1;
+      TIM2_CR1_bit.CEN = 1;
+      TIM4_CR1_bit.CEN = 0;
+    }
   }
 }
 
@@ -135,7 +163,7 @@ void adc_init()
 {
   ADC_CSR_bit.CH = adc_current_channel;
   ADC_CSR_bit.EOCIE = 1;
-  ADC_CR1_bit.SPSEL = 3;//+1
+  ADC_CR1_bit.SPSEL = 0;//+1
   ADC_CR2_bit.ALIGN = 1;
   
   ADC_CR1_bit.ADON = 1;
@@ -325,7 +353,7 @@ __interrupt void ADC1_EOC_handler(void)
       adc_interrupt = ADC_DRL;
       adc_interrupt = adc_interrupt + (ADC_DRH << 8);
       break;
-    case 2:      
+    case 2:
       break;
     case 3:
       break;
@@ -343,8 +371,17 @@ __interrupt void ADC1_EOC_handler(void)
     buf = 0;
     buf = ADC_DRL;
     buf = buf + (ADC_DRH << 8);
-    if(buf > adc_threshold)
+    if(buf < adc_threshold)
     {
+      buf = 0;
+    }
+    if(buf > average_value)
+    {
+      average_value += buf/AVERAGE_DIVIDER;
+    }
+    if(buf < average_value)
+    {
+      average_value -= buf/AVERAGE_DIVIDER;
     }
   }
   
