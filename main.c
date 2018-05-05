@@ -39,7 +39,30 @@ int main( void )
       TIM2_CR1_bit.CEN = 0;
       TIM4_CR1_bit.CEN = 0;
     }
+    
     if(mode == 3 && average_value > adc_threshold && TIM2_CR1_bit.CEN == 0 && TIM4_CR1_bit.CEN == 0)
+    {
+      calculating();
+      
+      TIM1_CNTRH = period_main_start >> 8;
+      TIM1_CNTRL = period_main_start & 0xFF;
+      
+      TIM1_CCR1H = period_main_half >> 8;
+      TIM1_CCR1L = period_main_half & 0xFF;
+      
+      TIM1_ARRH = period_main >> 8;
+      TIM1_ARRL = period_main & 0xFF;
+      
+      TIM2_ARRH = period_interrupt >> 8;
+      TIM2_ARRL = period_interrupt & 0xFF;
+      
+      TIM1_CR1_bit.CEN = 1;
+      TIM1_BKR_bit.MOE = 1;
+      TIM2_CR1_bit.CEN = 1;
+      TIM4_CR1_bit.CEN = 0;
+    }
+    
+    if(mode != 3 && TIM2_CR1_bit.CEN == 0 && TIM4_CR1_bit.CEN == 0)
     {
       calculating();
       
@@ -71,6 +94,7 @@ void calculating_first()
   }
   
   period_interrupt = MIN_INTERRUPT_PERIOD;
+  average_value = MAX_INTERRUPT_PERIOD;
     
   period_main_half = period_main/2;
   period_main_start = period_main_half/2;
@@ -82,15 +106,6 @@ void calculating_first()
 
 void calculating()
 {
-//  period_main = MIN_MAIN_PERIOD + ((uint32_t)(MAX_MAIN_PERIOD - MIN_MAIN_PERIOD)*adc_main)/ADC_BIT_CAPACITY;
-  if(mode == 4)
-  {
-    period_main = MAX_MAIN_PERIOD - MIN_MAIN_PERIOD;
-    period_main = period_main*adc_main;
-    period_main = period_main >> 10;
-    period_main = period_main + MIN_MAIN_PERIOD;
-  }
-  
 //  period_interrupt = MIN_INTERRUPT_PERIOD + ((MAX_INTERRUPT_PERIOD - MIN_INTERRUPT_PERIOD)*adc_interrupt)/ADC_BIT_CAPACITY;
   if(mode == 1)
   {
@@ -99,6 +114,51 @@ void calculating()
     period_interrupt = period_interrupt >> 10;
     period_interrupt = period_interrupt + MIN_INTERRUPT_PERIOD;
   }
+  
+  if(mode == 2)
+  {    
+    buf = MAX_INTERRUPT_PERIOD - MIN_INTERRUPT_PERIOD;
+    buf = buf*triangle_step;
+    buf = buf >> 10;
+    buf = buf + MIN_INTERRUPT_PERIOD;
+    triangle_min = buf
+    
+    buf = MAX_INTERRUPT_PERIOD - MIN_INTERRUPT_PERIOD;
+    buf = buf*triangle_step;
+    buf = buf >> 10;
+    triangle_step = buf/TRIANGLE_DIVIDER;
+    
+    if(triangle_destination == 0)
+    {
+      if((period_interrupt + triangle_step) > MAX_INTERRUPT_PERIOD)
+      {
+        triangle_destination = 1;
+      }
+      period_interrupt += triangle_step;
+    }
+    else
+    {
+      if((period_interrupt + triangle_step) < triangle_min)
+      {
+        triangle_destination = 0;
+      }
+      period_interrupt -= triangle_step;
+    }
+  }
+  
+  if(mode == 3)
+  {
+    period_interrupt = average_value;
+  }
+  
+//  period_main = MIN_MAIN_PERIOD + ((uint32_t)(MAX_MAIN_PERIOD - MIN_MAIN_PERIOD)*adc_main)/ADC_BIT_CAPACITY;
+  if(mode == 4)
+  {
+    period_main = MAX_MAIN_PERIOD - MIN_MAIN_PERIOD;
+    period_main = period_main*adc_main;
+    period_main = period_main >> 10;
+    period_main = period_main + MIN_MAIN_PERIOD;
+  }  
   
   period_main_half = period_main/2;
   period_main_start = period_main_half/2;
@@ -163,7 +223,7 @@ void adc_init()
 {
   ADC_CSR_bit.CH = adc_current_channel;
   ADC_CSR_bit.EOCIE = 1;
-  ADC_CR1_bit.SPSEL = 0;//+1
+  ADC_CR1_bit.SPSEL = 3;//+1
   ADC_CR2_bit.ALIGN = 1;
   
   ADC_CR1_bit.ADON = 1;
@@ -325,6 +385,9 @@ __interrupt void ADC1_EOC_handler(void)
     if(adc_border > MODE_BORDER_FIRST && adc_border < MODE_BORDER_SECOND)
     {
       mode = 2;
+      triangle_step = adc_border - MODE_BORDER_FIRST;
+      triangle_step = triangle_step*1024;
+      triangle_step = triangle_step/(MODE_BORDER_SECOND - MODE_BORDER_FIRST);
     }
     if(adc_border > MODE_BORDER_SECOND && adc_border < MODE_BORDER_THIRD)
     {
@@ -354,6 +417,9 @@ __interrupt void ADC1_EOC_handler(void)
       adc_interrupt = adc_interrupt + (ADC_DRH << 8);
       break;
     case 2:
+      triangle_min = 0;
+      triangle_min = ADC_DRL;
+      triangle_min = triangle_min + (ADC_DRH << 8);
       break;
     case 3:
       break;

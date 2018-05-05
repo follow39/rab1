@@ -17,6 +17,7 @@
 #define MODE_BORDER_THIRD 1024*0.8
 #define MODE_BORDER_SAVE 1024*0.95
 #define AVERAGE_DIVIDER 10
+#define TRIANGLE_DIVIDER 128
 
 
 
@@ -45,6 +46,9 @@ uint16_t adc_main = 0;
 uint16_t adc_interrupt = 0;
 uint16_t adc_border = 0;
 uint16_t adc_threshold = 0;
+uint16_t triangle_step = 0;
+uint16_t triangle_min = 0;
+uint16_t triangle_destination = 0;//0 - up, 1 - down
 uint16_t buf = 0;
 uint16_t buf1 = 0;
 uint32_t average_value = 0;
